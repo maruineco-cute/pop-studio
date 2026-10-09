@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f2ea">
+<title>POP STUDIO — 手描き風POPメーカー</title>
+<style>
+  @font-face {
+    font-family: "TanukiMagic";
+    src: url("./assets/TanukiMagic.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face { font-family:"TanugoKaku"; src:url("./assets/Tanugo-Regular.otf") format("opentype"); font-weight:400; font-display:swap; }
+  @font-face { font-family:"TanugoKakuBold"; src:url("./assets/Tanugo-Bold.otf") format("opentype"); font-weight:400; font-display:swap; }
+  @font-face { font-family:"TanugoMaru"; src:url("./assets/Tanugo-Round-Regular.otf") format("opentype"); font-weight:400; font-display:swap; }
+  @font-face { font-family:"TanugoMaruBold"; src:url("./assets/Tanugo-Round-Bold.otf") format("opentype"); font-weight:400; font-display:swap; }
+  :root {
+    --paper: #f5f2ea;
+    --panel: #fffefa;
+    --ink: #191919;
+    --muted: #77756f;
+    --line: #e7e2d8;
+    --red: #e53935;
+    --yellow: #ffdf00;
+    --green: #3b6e51;
+    --shadow: 0 15px 45px rgba(46, 39, 23, .09);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea, select { font: inherit; }
+  button { color: inherit; }
+  .app { min-height: 100vh; }
+  .topbar {
+    height: 78px; padding: 0 34px; display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,254,250,.94); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5;
+    backdrop-filter: blur(12px);
+  }
+  .brand { display:flex; align-items:center; gap: 12px; }
+  .brand-mark { width: 39px; height: 39px; display:grid; place-items:center; background:var(--yellow); border:2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); transform: rotate(-3deg); font-weight:1000; font-size:18px; letter-spacing:-2px; }
+  .brand-name { font-weight: 900; font-size: 16px; letter-spacing: -.04em; line-height:1.1; }
+  .brand-sub { display:block; font-size:9px; letter-spacing:.18em; color:#777; margin-top:4px; font-weight:700; }
+  .top-actions { display:flex; align-items:center; gap:14px; }
+  .local-note { color:var(--muted); font-size:12px; }
+  .export-btn { border:0; background:var(--ink); color:white; border-radius:9px; padding:12px 18px; font-weight:800; cursor:pointer; display:flex; gap:9px; align-items:center; transition:transform .15s, background .15s; }
+  .export-btn:hover:not(:disabled) { background:#333; transform:translateY(-1px); }
+  .export-btn:disabled { opacity:.62; cursor:wait; }
+  .export-btn svg { width:17px; height:17px; }
+  .intro { max-width: 1500px; margin:0 auto; padding: 27px 34px 18px; display:flex; justify-content:space-between; align-items:end; gap:24px; }
+  .eyebrow { color:var(--red); font-weight:900; font-size:10px; letter-spacing:.17em; text-transform:uppercase; margin:0 0 8px; }
+  h1 { font-size:clamp(22px, 3vw, 32px); letter-spacing:-.06em; line-height:1.18; margin:0; font-weight:1000; }
+  .intro p { color:#75716a; font-size:13px; line-height:1.7; margin:9px 0 0; }
+  .intro-stamp { border:1px solid var(--ink); padding:9px 12px; font-size:10px; font-weight:900; letter-spacing:.08em; transform:rotate(2deg); white-space:nowrap; background:#fffef9; }
+  .workspace { max-width:1500px; margin:0 auto; padding:0 34px 36px; display:grid; grid-template-columns: 354px minmax(0,1fr); gap:22px; align-items:start; }
+  .sidebar { display:flex; flex-direction:column; gap:13px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:13px; overflow:hidden; }
+  .panel-head { padding:16px 17px 13px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #f0ede6; }
+  .panel-title { font-weight:900; font-size:13px; letter-spacing:-.02em; }
+  .panel-kicker { color:#969188; font-size:10px; font-weight:700; letter-spacing:.08em; }
+  .panel-body { padding:15px 17px 17px; }
+  .format-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .format-btn { background:#fff; border:1px solid #e4e0d8; padding:10px 6px 9px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:800; transition:.15s; }
+  .format-btn:hover { border-color:#aaa397; }
+  .format-btn.active { border:1.5px solid var(--ink); box-shadow:inset 0 0 0 1px var(--ink); background:#fffdf2; }
+  .format-icon { display:block; height:20px; margin:0 auto 6px; border:1.5px solid currentColor; position:relative; }
+  .format-icon.portrait { width:14px; }
+  .format-icon.square { width:18px; height:18px; }
+  .format-icon.landscape { width:23px; height:16px; margin-top:2px; margin-bottom:8px; }
+  .color-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
+  .fixed-color { display:flex; align-items:center; gap:8px; color:#69655d; font-size:10px; font-weight:800; }
+  .fixed-yellow-chip { width:21px; height:21px; flex:none; border:1.5px solid #171717; background:#ffdf00; border-radius:4px; box-shadow:2px 2px 0 #171717; }
+  .fixed-badge { color:#8f8879; font-size:9px; letter-spacing:.06em; font-weight:700; }
+  .field-label { font-size:11px; font-weight:800; color:#46433e; }
+  .swatches { display:flex; align-items:center; gap:8px; }
+  .swatch { width:22px; height:22px; border-radius:50%; border:1px solid rgba(0,0,0,.16); cursor:pointer; padding:0; position:relative; }
+  .swatch[data-bg="#ffdf00"] { background:#ffdf00; }
+  .swatch[data-bg="#ffe667"] { background:#ffe667; }
+  .swatch[data-bg="#fff3ad"] { background:#fff3ad; }
+  .swatch[data-bg="#fffefa"] { background:#fffefa; }
+  .swatch.active::after { content:""; position:absolute; inset:-4px; border:1.5px solid var(--ink); border-radius:50%; }
+  .color-custom { width:25px; height:25px; padding:0; border:0; border-radius:50%; overflow:hidden; background:none; cursor:pointer; }
+  .color-custom::-webkit-color-swatch-wrapper { padding:0; }
+  .color-custom::-webkit-color-swatch { border:1px solid rgba(0,0,0,.18); border-radius:50%; }
+  .divider { height:1px; background:#efede7; margin:16px 0; }
+  .check-line { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; }
+  .check-label { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:800; cursor:pointer; }
+  input[type="checkbox"] { accent-color:var(--red); width:15px; height:15px; margin:0; }
+  .range-line { margin-top:14px; }
+  .range-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+  .range-meta label { font-size:11px; font-weight:800; }
+  .range-value { font-size:10px; font-weight:800; color:#827d74; }
+  input[type="range"] { width:100%; accent-color:var(--red); height:4px; display:block; cursor:pointer; }
+  .section-caption { color:#969188; font-size:10px; line-height:1.6; margin-top:9px; }
+  .layer-actions { padding:12px 14px; display:flex; gap:7px; border-bottom:1px solid #f0ede6; }
+  .add-btn { display:flex; justify-content:center; align-items:center; gap:6px; border:1px solid #ded9ce; background:#fff; padding:9px 8px; border-radius:7px; font-size:11px; font-weight:800; cursor:pointer; flex:1; transition:.15s; }
+  .add-btn:hover { border-color:var(--ink); background:#fffdf5; }
+  .add-btn.primary { background:var(--red); border-color:var(--red); color:white; }
+  .add-btn.primary:hover { background:#c92f2b; }
+  .add-btn span { font-size:15px; line-height:10px; }
+  .layer-list { padding:8px; max-height:224px; overflow:auto; }
+  .layer-row { display:flex; align-items:center; gap:9px; padding:8px; border:1px solid transparent; border-radius:8px; min-height:46px; }
+  .layer-row.active { border-color:#e9dfc4; background:#fff9e8; }
+  .layer-select { display:flex; align-items:center; gap:9px; flex:1; min-width:0; text-align:left; border:0; background:transparent; cursor:pointer; padding:0; }
+  .layer-icon { width:27px; height:27px; border-radius:6px; display:grid; place-items:center; background:#f0eee8; font-size:11px; font-weight:1000; flex:none; }
+  .layer-icon.text { color:#c8322e; background:#fff0ed; }
+  .layer-icon.line { color:#222; background:#eee; }
+  .layer-icon.image { color:#476a53; background:#edf4ee; }
+  .layer-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; font-weight:800; }
+  .layer-kind { display:block; color:#a09b90; font-size:8px; letter-spacing:.1em; margin-top:2px; }
+  .layer-tools { display:flex; gap:2px; }
+  .mini-btn { width:24px; height:24px; border:0; background:transparent; color:#8c877d; border-radius:5px; cursor:pointer; font-size:12px; display:grid; place-items:center; }
+  .mini-btn:hover { background:#eeeae1; color:var(--ink); }
+  .mini-btn.delete:hover { background:#fff0ee; color:#c32e2a; }
+  .empty-layers { color:#99948a; font-size:11px; text-align:center; padding:20px 8px; }
+  .props-body { padding:15px 17px 17px; }
+  .props-empty { color:#8d887e; font-size:11px; line-height:1.7; background:#f7f5ef; padding:12px; border-radius:8px; }
+  .field { margin-bottom:14px; }
+  .field:last-child { margin-bottom:0; }
+  .field > label, .field-label-block { display:flex; align-items:center; justify-content:space-between; color:#46433e; font-size:11px; font-weight:800; margin-bottom:7px; }
+  textarea, .text-input, select { width:100%; background:#fff; border:1px solid #e2ded5; border-radius:7px; padding:9px 10px; outline:none; color:#222; font-size:12px; }
+  textarea { min-height:74px; resize:vertical; line-height:1.55; }
+  textarea:focus, .text-input:focus, select:focus { border-color:#8c8371; box-shadow:0 0 0 2px rgba(229,57,53,.08); }
+  .inline-controls { display:flex; align-items:center; gap:9px; }
+  .inline-controls > * { min-width:0; }
+  .small-color { width:37px; height:35px; padding:3px; border:1px solid #e2ded5; border-radius:7px; background:white; }
+  .small-color::-webkit-color-swatch-wrapper { padding:0; }
+  .small-color::-webkit-color-swatch { border:0; border-radius:4px; }
+  .mini-select { flex:1; }
+  .color-presets { display:flex; gap:7px; margin-top:8px; }
+  .text-color-btn { display:flex; align-items:center; gap:5px; border:1px solid #e6e2d9; background:#fff; border-radius:6px; font-size:10px; font-weight:800; padding:6px 8px; cursor:pointer; }
+  .text-color-btn:hover { border-color:#aaa397; }
+  .color-dot { display:inline-block; width:11px; height:11px; border-radius:50%; border:1px solid #ddd; }
+  .subtle-btn { background:#fff; border:1px solid #e2ded5; border-radius:7px; padding:9px 10px; font-size:11px; font-weight:800; cursor:pointer; width:100%; }
+  .subtle-btn:hover { border-color:#999; }
+  .delete-full { margin-top:11px; color:#b13a35; background:#fffafa; border-color:#f0d7d4; }
+  .position-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .position-grid .field { margin:0; }
+  .position-grid input { width:100%; }
+  .preview-card { min-height:600px; border:1px solid var(--line); border-radius:13px; overflow:hidden; background:#eae7df; box-shadow:var(--shadow); }
+  .preview-head { height:53px; display:flex; align-items:center; justify-content:space-between; padding:0 18px; background:#fffefa; border-bottom:1px solid var(--line); }
+  .preview-title { display:flex; gap:8px; align-items:center; font-size:11px; font-weight:900; }
+  .live-dot { width:7px; height:7px; background:#4f9b67; border-radius:50%; box-shadow:0 0 0 3px #e8f3e9; }
+  .preview-hint { color:#8d887e; font-size:10px; }
+  .quickbar { padding:8px 16px; display:flex; flex-direction:column; gap:6px; background:#fffdf7; border-bottom:1px solid var(--line); }
+  .quick-row { display:grid; grid-template-columns:105px 59px 30px minmax(100px,1fr) 30px minmax(150px,auto); align-items:center; gap:9px; min-height:34px; }
+  .quickbar-title { font-size:11px; font-weight:900; line-height:1.2; }
+  .quickbar-title small { display:block; margin-top:4px; color:#9a9489; font-size:9px; font-weight:700; }
+  .quickbar-value { color:#d13b35; font-size:12px; font-weight:1000; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .quick-step { width:30px; height:30px; border:1px solid #ded9ce; background:#fff; border-radius:7px; font-size:18px; line-height:1; font-weight:700; cursor:pointer; }
+  .quick-step:hover:not(:disabled) { border-color:#171717; background:#fff8e2; }
+  .quick-step:disabled { opacity:.4; cursor:not-allowed; }
+  .quick-size-range { width:100%; min-width:80px; accent-color:var(--red); cursor:pointer; }
+  .quick-size-range:disabled { opacity:.4; cursor:not-allowed; }
+  .quickbar-hint { color:#878176; font-size:10px; line-height:1.45; text-align:right; }
+  .quickbar.no-text .quickbar-value { color:#a49e94; }
+  .preview-workarea { min-height:547px; padding:27px; display:flex; align-items:center; justify-content:center; position:relative; background-color:#eae7df; background-image:radial-gradient(#d4d0c7 0.8px,transparent .8px); background-size:15px 15px; }
+  .paper-wrap { position:relative; display:flex; justify-content:center; align-items:center; max-width:100%; max-height:calc(100vh - 205px); }
+  #poster { display:block; width:auto; height:auto; max-width:min(100%, 520px); max-height:calc(100vh - 205px); border:1px solid rgba(0,0,0,.12); box-shadow:0 14px 35px rgba(0,0,0,.18); touch-action:none; cursor:grab; }
+  #poster.dragging { cursor:grabbing; }
+  .preview-footer { display:flex; justify-content:space-between; align-items:center; padding:11px 17px; color:#8c877d; background:#fffefa; border-top:1px solid var(--line); font-size:10px; }
+  .footer-badge { color:#5a594f; font-weight:800; }
+  .notice { max-width:1500px; margin:-20px auto 0; padding:0 34px 28px; color:#8a857b; font-size:10px; line-height:1.6; }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translate(-50%, 15px); opacity:0; pointer-events:none; background:#1d1d1d; color:white; border-radius:9px; padding:12px 17px; font-size:12px; font-weight:800; z-index:10; transition:.22s; box-shadow:0 8px 25px rgba(0,0,0,.2); }
+  .toast.show { opacity:1; transform:translate(-50%,0); }
+  .export-modal { display:none; position:fixed; inset:0; z-index:20; align-items:center; justify-content:center; padding:18px; }
+  .export-modal.open { display:flex; }
+  .export-backdrop { position:absolute; inset:0; background:rgba(22,20,17,.56); }
+  .export-dialog { position:relative; width:min(100%,620px); max-height:calc(100dvh - 36px); overflow:auto; padding:19px; border:1px solid rgba(0,0,0,.08); border-radius:15px; background:#fffefa; box-shadow:0 25px 90px rgba(0,0,0,.28); }
+  .export-dialog-head { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+  .export-dialog-title { margin:0; font-size:19px; font-weight:1000; letter-spacing:-.04em; }
+  .export-close { width:34px; height:34px; border:1px solid #e7e2d8; border-radius:50%; background:#fff; cursor:pointer; font-size:20px; line-height:1; }
+  .export-preview-stage { min-height:160px; margin-top:13px; padding:14px; display:flex; justify-content:center; align-items:center; border-radius:10px; background:#eae7df; }
+  .export-preview-stage img { display:block; max-width:100%; max-height:52vh; width:auto; height:auto; box-shadow:0 9px 25px rgba(0,0,0,.17); }
+  .export-meta { display:flex; justify-content:space-between; gap:12px; padding:11px 2px; color:#726e65; font-size:11px; font-weight:800; }
+  .export-dialog-actions { display:flex; gap:9px; }
+  .export-save-btn, .export-close-bottom { flex:1; min-height:42px; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:12px; font-weight:900; cursor:pointer; text-decoration:none; }
+  .export-save-btn { border:0; background:#191919; color:#fff; }
+  .export-save-btn:hover { background:#333; }
+  .export-close-bottom { border:1px solid #ded9ce; background:#fff; color:#292722; }
+  .export-note { color:#8a857b; font-size:10px; line-height:1.6; margin:11px 2px 0; }
+  .hidden-input { display:none; }
+  @media (min-width: 1200px) {
+    .preview-workarea { min-height: min(70vh, 820px); }
+    #poster { max-height: min(calc(100vh - 225px), 760px); }
+    .paper-wrap { max-height: min(calc(100vh - 225px), 760px); }
+  }
+  @media (max-width: 900px) {
+    .topbar { padding:0 20px; }
+    .intro { padding:24px 20px 16px; }
+    .workspace { padding:0 20px 30px; grid-template-columns:310px minmax(0,1fr); gap:14px; }
+    .preview-workarea { padding:18px; }
+    .quickbar { padding:7px 10px; gap:5px; }
+    .quick-row { grid-template-columns:75px 52px 27px minmax(60px,1fr) 27px; gap:6px; }
+    .quick-size-range { min-width:0; }
+    .quickbar-hint { display:none; }
+    .local-note { display:none; }
+  }
+  @media (max-width: 700px) {
+    .topbar { height:65px; padding:0 15px; }
+    .brand-mark { width:35px; height:35px; }
+    .brand-name { font-size:14px; }
+    .export-btn { padding:10px 12px; font-size:11px; }
+    .intro { padding:21px 16px 15px; align-items:start; }
+    .intro-stamp { display:none; }
+    .intro p { font-size:12px; }
+    .workspace { padding:0 12px 24px; display:flex; flex-direction:column; }
+    .preview-card { order:-1; width:100%; min-height:0; }
+    .preview-head { height:45px; padding:0 12px; }
+    .preview-hint { display:none; }
+    .quickbar { gap:4px; padding:7px 9px; }
+    .quick-row { grid-template-columns:minmax(72px,auto) 52px 27px minmax(55px,1fr) 27px; gap:5px; min-height:32px; }
+    .quickbar-title { font-size:10px; }
+    .quickbar-title small { font-size:8px; margin-top:3px; }
+    .quickbar-value { font-size:11px; }
+    .quick-step { width:27px; height:28px; }
+    .quickbar-hint { display:none; }
+    .preview-workarea { min-height:0; padding:15px 12px; }
+    #poster { max-height:53vh; max-width:100%; }
+    .paper-wrap { max-height:53vh; }
+    .preview-footer { padding:9px 12px; }
+    .sidebar { width:100%; }
+    .notice { margin:0; padding:0 16px 22px; }
+    .panel-head { padding:14px 15px 12px; }
+    .panel-body, .props-body { padding:14px 15px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">POP!</div>
+      <div class="brand-name">POP STUDIO<span class="brand-sub">店頭POP MAKER</span></div>
+    </div>
+    <div class="top-actions">
+      <span class="local-note">入力した内容はこのブラウザ内で処理されます</span>
+      <button class="export-btn" id="export-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        PNGを書き出す
+      </button>
+    </div>
+  </header>
+
+  <section class="intro">
+    <div>
+      <div class="eyebrow">MAKE IT LOUD · MAKE IT YOURS</div>
+      <h1>目を引くPOP、つくろう。</h1>
+      <p>黄色背景は固定。手書きマジック文字を大きく、太く。スライダーや2本指ピンチで調整。</p>
+    </div>
+    <div class="intro-stamp">文字もロゴも、自由にレイアウト！</div>
+  </section>
+
+  <main class="workspace">
+    <aside class="sidebar">
+      <section class="panel">
+        <div class="panel-head"><span class="panel-title">レイヤー</span><span class="panel-kicker">上ほど前面　／　↑↓で移動</span></div>
+        <div class="layer-actions">
+          <button class="add-btn primary" id="add-text" type="button"><span>＋</span>文字を追加</button>
+          <button class="add-btn" id="add-line" type="button"><span>／</span>下線</button>
+          <button class="add-btn" id="add-image" type="button"><span>＋</span>ロゴ・画像</button>
+        </div>
+        <div class="layer-list" id="layer-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="panel-title">選択中の要素</span><span class="panel-kicker" id="selected-kind">02 / EDIT</span></div>
+        <div class="props-body" id="props-body"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><span class="panel-title">用紙と背景</span><span class="panel-kicker">03 / CANVAS</span></div>
+        <div class="panel-body">
+          <div class="format-grid" id="format-controls">
+            <button class="format-btn active" data-format="portrait" type="button"><span class="format-icon portrait"></span>A4 たて</button>
+            <button class="format-btn" data-format="square" type="button"><span class="format-icon square"></span>正方形</button>
+            <button class="format-btn" data-format="landscape" type="button"><span class="format-icon landscape"></span>よこ長</button>
+          </div>
+          <div class="color-row">
+            <span class="field-label">背景色</span>
+            <div class="fixed-color"><span class="fixed-yellow-chip" aria-hidden="true"></span><span>POPイエロー</span><span class="fixed-badge">固定</span></div>
+          </div>
+          <div class="divider"></div>
+          <label class="check-label"><input type="checkbox" id="border-toggle" checked> 黒い枠線をつける</label>
+          <div class="range-line" id="border-range-wrap">
+            <div class="range-meta"><label for="border-width">枠線の太さ</label><span class="range-value" id="border-width-val">36 px</span></div>
+            <input type="range" id="border-width" min="12" max="80" value="36">
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="preview-card">
+      <div class="preview-head">
+        <div class="preview-title"><span class="live-dot"></span>プレビュー <span style="color:#a19a8e;font-weight:600">・変更はすぐ反映</span></div>
+        <div class="preview-hint">1本指で移動 ・ 2本指で拡大縮小</div>
+      </div>
+      <div class="quickbar" id="quickbar">
+        <div class="quick-row">
+          <div class="quickbar-title">文字サイズ<small>選択中の文字</small></div>
+          <div class="quickbar-value" id="quick-size-value">160 px</div>
+          <button class="quick-step" id="quick-smaller" type="button" title="文字を小さく" aria-label="文字を小さく">−</button>
+          <input class="quick-size-range" id="quick-size" type="range" min="28" max="480" value="160" aria-label="選択中の文字サイズ">
+          <button class="quick-step" id="quick-larger" type="button" title="文字を大きく" aria-label="文字を大きく">＋</button>
+          <div class="quickbar-hint" id="quick-hint">スライダーか、プレビュー上で2本指ピンチ</div>
+        </div>
+        <div class="quick-row">
+          <div class="quickbar-title">字間<small>マイナスで詰める</small></div>
+          <div class="quickbar-value" id="quick-tracking-value">0 px</div>
+          <button class="quick-step" id="quick-spacing-narrow" type="button" title="字間を詰める" aria-label="字間を詰める">−</button>
+          <input class="quick-size-range" id="quick-tracking" type="range" min="-200" max="32" value="0" aria-label="選択中の文字の字間">
+          <button class="quick-step" id="quick-spacing-wide" type="button" title="字間を広げる" aria-label="字間を広げる">＋</button>
+          <div class="quickbar-hint" id="quick-tracking-hint">マイナスで文字が重なるところまで</div>
+        </div>
+      </div>
+      <div class="preview-workarea">
+        <div class="paper-wrap"><canvas id="poster" aria-label="POPデザインのプレビュー"></canvas></div>
+      </div>
+      <div class="preview-footer"><span>タップで選択　／　1本指で移動　／　2本指でサイズ変更</span><span class="footer-badge">高画質 PNG で保存</span></div>
+    </section>
+  </main>
+  <p class="notice">※ このツールは非公式のPOP制作サンプルです。背景色はPOPイエロー固定です。「たぬき油性マジック」「たぬゴ」（作者：たぬき侍）を同梱しています。<a href="https://tanukifont.com/tanuki-permanent-marker/" target="_blank" rel="noreferrer">たぬき油性マジックの利用条件</a> ／ <a href="https://tanukifont.com/tanugo/" target="_blank" rel="noreferrer">たぬゴの利用条件</a>　画像は端末内で処理されます。アップロードするロゴ・画像の利用権をご確認ください。</p>
+</div>
+<input class="hidden-input" type="file" id="image-input" accept="image/*">
+<div class="toast" id="toast" role="status"></div>
+<div class="export-modal" id="export-modal" aria-hidden="true">
+  <div class="export-backdrop" data-close-export></div>
+  <section class="export-dialog" role="dialog" aria-modal="true" aria-labelledby="export-dialog-title">
+    <div class="export-dialog-head">
+      <div><div class="eyebrow" style="margin-bottom:5px">WEB IMAGE · PNG</div><h2 class="export-dialog-title" id="export-dialog-title">書き出しプレビュー</h2></div>
+      <button class="export-close" id="export-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div class="export-preview-stage"><img id="export-preview" alt="書き出すPOP画像のプレビュー"></div>
+    <div class="export-meta"><span id="export-dimensions">900 × 1200 px</span><span>Web用・1×サイズ</span></div>
+    <div class="export-dialog-actions">
+      <a class="export-save-btn" id="export-save" href="#" download="pop-studio.png">PNGを保存</a>
+      <button class="export-close-bottom" id="export-close-bottom" type="button">閉じる</button>
+    </div>
+    <p class="export-note">保存が始まらない場合は、プレビュー画像を長押し（PCは右クリック）して保存できます。</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const formats = {
+    portrait: { w: 900, h: 1200, label: 'A4 たて' },
+    square: { w: 1050, h: 1050, label: '正方形' },
+    landscape: { w: 1200, h: 850, label: 'よこ長' }
+  };
+  const state = {
+    format: 'portrait', background: '#ffdf00', border: true, borderWidth: 36,
+    layers: [
+      { id: 't1', type: 'text', text: 'これ、', x: 50, y: 18, size: 86, fill: '#161616', stroke: '#ffdf00', outline: false, outlineWidth: 18, opacity: 100, tracking: 0, font: 'marker', rotate: -2, weight: 400 },
+      { id: 't2', type: 'text', text: 'めっちゃ', x: 50, y: 39, size: 160, fill: '#e53935', stroke: '#171717', outline: true, outlineWidth: 24, opacity: 100, tracking: 0, font: 'marker', rotate: 2, weight: 400 },
+      { id: 't3', type: 'text', text: 'おすすめ！', x: 50, y: 59, size: 142, fill: '#e53935', stroke: '#171717', outline: true, outlineWidth: 24, opacity: 100, tracking: 0, font: 'marker', rotate: -1, weight: 400 },
+      { id: 'l1', type: 'line', x: 50, y: 69, length: 68, thickness: 33, color: '#171717', opacity: 100, rotate: -3 },
+      { id: 't4', type: 'text', text: 'スタッフ激推し', x: 50, y: 82, size: 62, fill: '#171717', stroke: '#ffdf00', outline: false, outlineWidth: 18, opacity: 100, tracking: 0, font: 'marker', rotate: 1, weight: 400 }
+    ], selected: 't2', nextId: 5
+  };
+  const canvas = document.getElementById('poster');
+  const ctx = canvas.getContext('2d');
+  const listEl = document.getElementById('layer-list');
+  const propsEl = document.getElementById('props-body');
+  const imageInput = document.getElementById('image-input');
+  let dragState = null;
+  let pendingReplaceId = null;
+  let toastTimer;
+
+  const currentFormat = () => formats[state.format];
+  const getLayer = id => state.layers.find(layer => layer.id === id);
+  const escapeHTML = value => String(value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  const displayName = layer => layer.type === 'text' ? (layer.text.replace(/\n/g, ' ').trim() || 'テキスト') : layer.type === 'line' ? '下線' : (layer.name || '画像');
+  const fontFamilyName = font => ({
+    marker: 'TanukiMagic', 'tanugo-kaku': 'TanugoKaku', 'tanugo-kaku-bold': 'TanugoKakuBold',
+    'tanugo-maru': 'TanugoMaru', 'tanugo-maru-bold': 'TanugoMaruBold'
+  }[font] || (font === 'maru' ? 'Hiragino Maru Gothic ProN' : font === 'mincho' ? 'Yu Mincho' : 'Hiragino Kaku Gothic ProN'));
+  const fontStack = font => {
+    const families = {
+      marker: '"TanukiMagic", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif',
+      'tanugo-kaku': '"TanugoKaku", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
+      'tanugo-kaku-bold': '"TanugoKakuBold", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
+      'tanugo-maru': '"TanugoMaru", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif',
+      'tanugo-maru-bold': '"TanugoMaruBold", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif',
+      maru: '"Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", sans-serif',
+      mincho: '"Yu Mincho", "Hiragino Mincho ProN", "MS PMincho", serif'
+    };
+    return families[font] || '"Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif';
+  };
+  function ensureLayerFont(layer) {
+    const family = fontFamilyName(layer.font);
+    return document.fonts.load(`400 100px "${family}"`, layer.text || 'あ').then(() => true).catch(() => false);
+  }
+  function ensureSceneFonts() {
+    const texts = state.layers.filter(layer => layer.type === 'text');
+    return Promise.all(texts.map(layer => ensureLayerFont(layer)));
+  }
+  ensureLayerFont({ font:'marker', text:'めっちゃおすすめ！POP' }).then(() => renderCanvas());
+
+  function measureTrackedText(context, text, tracking = 0) {
+    if (!tracking) return context.measureText(text).width;
+    const chars = Array.from(text);
+    if (!chars.length) return 0;
+    let width = context.measureText(chars[chars.length - 1]).width;
+    for (let i = 0; i < chars.length - 1; i++) {
+      width += Math.max(0, context.measureText(chars[i]).width + tracking);
+    }
+    return width;
+  }
+
+  function wrapText(context, text, maxWidth, tracking = 0) {
+    const result = [];
+    String(text).split('\n').forEach(paragraph => {
+      if (!paragraph) { result.push(' '); return; }
+      let line = '';
+      for (const char of paragraph) {
+        const test = line + char;
+        if (line && measureTrackedText(context, test, tracking) > maxWidth) {
+          result.push(line);
+          line = char;
+        } else line = test;
+      }
+      if (line) result.push(line);
+    });
+    return result.length ? result : [' '];
+  }
+
+  function getTextMetrics(layer, width, height) {
+    const scale = height / 1200;
+    const fontSize = layer.size * scale;
+    const tracking = (layer.tracking || 0) * scale;
+    ctx.save();
+    ctx.font = `${layer.weight || 1000} ${fontSize}px ${fontStack(layer.font)}`;
+    const lines = layer.wrap === false
+      ? String(layer.text).split('\n')
+      : wrapText(ctx, layer.text, width * .88, tracking);
+    const maxLine = Math.max(1, ...lines.map(line => measureTrackedText(ctx, line, tracking)));
+    ctx.restore();
+    const lineHeight = fontSize * 1.08;
+    const boxW = maxLine + (layer.outline ? layer.outlineWidth * scale * 2 : 0) + 12 * scale;
+    const boxH = lineHeight * lines.length + (layer.outline ? layer.outlineWidth * scale * 2 : 0) + 12 * scale;
+    return { lines, fontSize, tracking, lineHeight, boxW, boxH };
+  }
+
+  function layerBounds(layer, width, height) {
+    const x = layer.x / 100 * width;
+    const y = layer.y / 100 * height;
+    if (layer.type === 'text') {
+      const m = getTextMetrics(layer, width, height);
+      return { x: x - m.boxW / 2, y: y - m.boxH / 2, w: m.boxW, h: m.boxH };
+    }
+    if (layer.type === 'line') {
+      const len = layer.length / 100 * width;
+      const th = Math.max(layer.thickness, 12);
+      const rad = layer.rotate * Math.PI / 180;
+      const w = Math.abs(len * Math.cos(rad)) + Math.abs(th * Math.sin(rad)) + 8;
+      const h = Math.abs(len * Math.sin(rad)) + Math.abs(th * Math.cos(rad)) + 8;
+      return { x: x - w / 2, y: y - h / 2, w, h };
+    }
+    const image = layer.img;
+    const iw = layer.size / 100 * width;
+    const ratio = image && image.naturalWidth ? image.naturalHeight / image.naturalWidth : 1;
+    const ih = iw * ratio;
+    return { x: x - iw / 2, y: y - ih / 2, w: iw, h: ih };
+  }
+
+  function drawScene(context, width, height, selectedId = null) {
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = state.background;
+    context.fillRect(0, 0, width, height);
+    if (state.border) {
+      const border = Math.max(1, state.borderWidth * height / 1200);
+      context.save();
+      context.strokeStyle = '#171717';
+      context.lineWidth = border;
+      context.strokeRect(border / 2, border / 2, width - border, height - border);
+      context.restore();
+    }
+    state.layers.forEach(layer => {
+      const x = layer.x / 100 * width;
+      const y = layer.y / 100 * height;
+      if (layer.type === 'text') {
+        const m = getTextMetrics(layer, width, height);
+        const scale = height / 1200;
+        context.save();
+        context.globalAlpha = clamp(layer.opacity ?? 100, 0, 100) / 100;
+        context.translate(x, y);
+        context.rotate((layer.rotate || 0) * Math.PI / 180);
+        context.font = `${layer.weight || 1000} ${m.fontSize}px ${fontStack(layer.font)}`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
+        const startY = -(m.lines.length - 1) * m.lineHeight / 2;
+        m.lines.forEach((line, i) => {
+          const lineY = startY + i * m.lineHeight;
+          if (Math.abs(m.tracking) < .01) {
+            if (layer.outline) {
+              context.strokeStyle = layer.stroke || '#171717';
+              context.lineWidth = layer.outlineWidth * scale;
+              context.strokeText(line, 0, lineY);
+            }
+            context.fillStyle = layer.fill || '#171717';
+            context.fillText(line, 0, lineY);
+          } else {
+            const lineWidth = measureTrackedText(context, line, m.tracking);
+            const glyphs = [];
+            let cursor = -lineWidth / 2;
+            for (const char of line) {
+              const charWidth = context.measureText(char).width;
+              glyphs.push({ char, x:cursor + charWidth / 2 });
+              cursor += Math.max(0, charWidth + m.tracking);
+            }
+            const drawOrder = m.tracking < 0 ? glyphs.reverse() : glyphs;
+            drawOrder.forEach(glyph => {
+              if (layer.outline) {
+                context.strokeStyle = layer.stroke || '#171717';
+                context.lineWidth = layer.outlineWidth * scale;
+                context.strokeText(glyph.char, glyph.x, lineY);
+              }
+              context.fillStyle = layer.fill || '#171717';
+              context.fillText(glyph.char, glyph.x, lineY);
+            });
+          }
+        });
+        context.restore();
+      } else if (layer.type === 'line') {
+        context.save();
+        context.globalAlpha = clamp(layer.opacity ?? 100, 0, 100) / 100;
+        context.translate(x, y);
+        context.rotate((layer.rotate || 0) * Math.PI / 180);
+        context.strokeStyle = layer.color || '#171717';
+        context.lineWidth = Math.max(1, layer.thickness * height / 1200);
+        context.lineCap = 'butt';
+        context.lineJoin = 'round';
+        const len = layer.length / 100 * width;
+        const seed = Array.from(String(layer.id || 'line')).reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 7) / 4294967295 * Math.PI * 2;
+        const amplitude = Math.min(context.lineWidth * .10, 4);
+        const segments = Math.max(24, Math.ceil(len / 7));
+        context.beginPath();
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const noise = Math.sin((i + 1) * 127.1 + seed * 311.7) * 43758.5453;
+          const tinyJitter = (noise - Math.floor(noise)) * 2 - 1;
+          const wobble = Math.sin(t * Math.PI * 2 * (1.05 + seed * .07) + seed) * amplitude * .62
+            + Math.sin(t * Math.PI * 2 * (2.8 + seed * .11) + seed * 1.7) * amplitude * .25
+            + tinyJitter * amplitude * .13;
+          const px = -len / 2 + t * len;
+          if (i === 0) context.moveTo(px, wobble); else context.lineTo(px, wobble);
+        }
+        context.stroke();
+        context.restore();
+      } else if (layer.type === 'image' && layer.img && layer.img.complete) {
+        const iw = layer.size / 100 * width;
+        const ih = iw * layer.img.naturalHeight / layer.img.naturalWidth;
+        context.save();
+        context.globalAlpha = clamp(layer.opacity ?? 100, 0, 100) / 100;
+        context.translate(x, y);
+        context.rotate((layer.rotate || 0) * Math.PI / 180);
+        context.drawImage(layer.img, -iw / 2, -ih / 2, iw, ih);
+        context.restore();
+      }
+    });
+    if (selectedId) {
+      const layer = getLayer(selectedId);
+      if (layer) {
+        const bounds = layerBounds(layer, width, height);
+        context.save();
+        context.setLineDash([8, 6]);
+        context.lineWidth = Math.max(1.5, height / 700);
+        context.strokeStyle = 'rgba(32,32,32,.7)';
+        context.strokeRect(bounds.x - 5, bounds.y - 5, bounds.w + 10, bounds.h + 10);
+        context.setLineDash([]);
+        context.fillStyle = '#fffefa'; context.strokeStyle = '#222'; context.lineWidth = 2;
+        const corners = [[bounds.x - 5, bounds.y - 5], [bounds.x + bounds.w + 5, bounds.y - 5], [bounds.x - 5, bounds.y + bounds.h + 5], [bounds.x + bounds.w + 5, bounds.y + bounds.h + 5]];
+        corners.forEach(([cx, cy]) => { context.beginPath(); context.arc(cx, cy, 5, 0, Math.PI * 2); context.fill(); context.stroke(); });
+        context.restore();
+      }
+    }
+  }
+
+  function renderCanvas() {
+    const { w, h } = currentFormat();
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    drawScene(ctx, w, h, state.selected);
+  }
+
+  function renderLayers() {
+    if (!state.layers.length) {
+      listEl.innerHTML = '<div class="empty-layers">まだ要素がありません。文字・下線・画像を追加できます。</div>';
+      return;
+    }
+    listEl.innerHTML = state.layers.slice().reverse().map((layer, index) => {
+      const active = layer.id === state.selected;
+      const kind = layer.type === 'text' ? 'TEXT' : layer.type === 'line' ? 'LINE' : 'IMAGE';
+      const glyph = layer.type === 'text' ? 'T' : layer.type === 'line' ? '／' : '▧';
+      return `<div class="layer-row ${active ? 'active' : ''}" data-row="${layer.id}">
+        <button class="layer-select" type="button" data-select="${layer.id}" aria-label="${escapeHTML(displayName(layer))}を選択">
+          <span class="layer-icon ${layer.type}">${glyph}</span><span style="min-width:0"><span class="layer-name">${escapeHTML(displayName(layer))}</span><span class="layer-kind">${kind}</span></span>
+        </button>
+        <div class="layer-tools">
+          <button class="mini-btn" type="button" data-move="up" data-id="${layer.id}" title="前面へ" aria-label="前面へ">↑</button>
+          <button class="mini-btn" type="button" data-move="down" data-id="${layer.id}" title="背面へ" aria-label="背面へ">↓</button>
+          <button class="mini-btn delete" type="button" data-delete="${layer.id}" title="削除" aria-label="削除">×</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderQuickBar() {
+    const layer = getLayer(state.selected);
+    const isText = !!layer && layer.type === 'text';
+    const bar = document.getElementById('quickbar');
+    const sizeRange = document.getElementById('quick-size');
+    const sizeValue = document.getElementById('quick-size-value');
+    const trackingRange = document.getElementById('quick-tracking');
+    const trackingValue = document.getElementById('quick-tracking-value');
+    ['quick-smaller', 'quick-larger', 'quick-spacing-narrow', 'quick-spacing-wide'].forEach(id => {
+      document.getElementById(id).disabled = !isText;
+    });
+    bar.classList.toggle('no-text', !isText);
+    sizeRange.disabled = !isText;
+    trackingRange.disabled = !isText;
+    if (isText) {
+      sizeRange.value = Math.round(layer.size);
+      sizeValue.textContent = `${Math.round(layer.size)} px`;
+      trackingRange.min = trackingMin(layer);
+      trackingRange.value = Math.round(layer.tracking ?? 0);
+      trackingValue.textContent = `${Math.round(layer.tracking ?? 0)} px`;
+    } else {
+      sizeRange.value = 160;
+      sizeValue.textContent = '—';
+      trackingRange.value = 0;
+      trackingValue.textContent = '—';
+    }
+    document.getElementById('quick-hint').textContent = isText
+      ? 'プレビューで2本指ピンチもできます'
+      : '文字を選ぶとサイズを調整できます';
+  }
+
+  function syncTextSizeControls(layer) {
+    if (!layer || layer.type !== 'text') return;
+    const size = Math.round(layer.size);
+    const quick = document.getElementById('quick-size');
+    const quickValue = document.getElementById('quick-size-value');
+    const inspector = document.getElementById('prop-size');
+    const inspectorValue = document.getElementById('prop-size-val');
+    if (quick) quick.value = size;
+    if (quickValue) quickValue.textContent = `${size} px`;
+    if (inspector) inspector.value = size;
+    if (inspectorValue) inspectorValue.textContent = `${size} px`;
+    syncTextTrackingControls(layer);
+  }
+
+  function syncTextTrackingControls(layer) {
+    if (!layer || layer.type !== 'text') return;
+    const tracking = Math.round(layer.tracking ?? 0);
+    const quick = document.getElementById('quick-tracking');
+    const quickValue = document.getElementById('quick-tracking-value');
+    const inspector = document.getElementById('prop-tracking');
+    const inspectorValue = document.getElementById('prop-tracking-val');
+    const min = trackingMin(layer);
+    if (quick) { quick.min = min; quick.value = tracking; }
+    if (quickValue) quickValue.textContent = `${tracking} px`;
+    if (inspector) { inspector.min = min; inspector.value = tracking; }
+    if (inspectorValue) inspectorValue.textContent = `${tracking} px`;
+  }
+
+  function rangeControl(id, label, value, min, max, unit = '', step = 1) {
+    return `<div class="range-line"><div class="range-meta"><label for="${id}">${label}</label><span class="range-value" id="${id}-val">${value}${unit}</span></div><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;
+  }
+  function coordControl(key, label, value) {
+    return `<div class="field"><label for="prop-${key}">${label}</label><input class="text-input" id="prop-${key}" type="number" min="0" max="100" step="1" value="${Math.round(value)}"></div>`;
+  }
+
+  function renderProps() {
+    const layer = getLayer(state.selected);
+    const kindEl = document.getElementById('selected-kind');
+    if (!layer) {
+      kindEl.textContent = 'EDIT';
+      propsEl.innerHTML = '<div class="props-empty">レイヤーを選ぶと、文字・色・サイズを編集できます。プレビュー上の要素はドラッグで移動できます。</div>';
+      return;
+    }
+    kindEl.textContent = layer.type === 'text' ? 'TEXT' : layer.type === 'line' ? 'LINE' : 'IMAGE';
+    let html = '';
+    if (layer.type === 'text') {
+      html += `<div class="field"><label for="prop-text">テキスト <span style="color:#a09b90;font-size:9px">改行もそのまま反映</span></label><textarea id="prop-text" maxlength="180">${escapeHTML(layer.text)}</textarea></div>`;
+      html += `<div class="field"><label class="check-label"><input type="checkbox" id="prop-wrap" ${layer.wrap !== false ? 'checked' : ''}> 自動で文字を折り返す</label><div class="section-caption">OFFなら入力した改行だけで表示。用紙からはみ出した部分は、プレビュー・保存とも用紙端で切り取られます。</div></div>`;
+      html += rangeControl('prop-size', '文字サイズ', layer.size, 28, 480, ' px');
+      html += `<div class="field"><label for="prop-font">フォントの雰囲気</label><select class="mini-select" id="prop-font"><optgroup label="手描き風"><option value="marker" ${layer.font === 'marker' ? 'selected' : ''}>たぬき油性マジック</option><option value="tanugo-kaku" ${layer.font === 'tanugo-kaku' ? 'selected' : ''}>たぬゴ角・標準</option><option value="tanugo-kaku-bold" ${layer.font === 'tanugo-kaku-bold' ? 'selected' : ''}>たぬゴ角・太</option><option value="tanugo-maru" ${layer.font === 'tanugo-maru' ? 'selected' : ''}>たぬゴ丸・標準</option><option value="tanugo-maru-bold" ${layer.font === 'tanugo-maru-bold' ? 'selected' : ''}>たぬゴ丸・太</option></optgroup><optgroup label="その他"><option value="gothic" ${layer.font === 'gothic' ? 'selected' : ''}>太めのゴシック</option><option value="maru" ${layer.font === 'maru' ? 'selected' : ''}>丸ゴシック</option><option value="mincho" ${layer.font === 'mincho' ? 'selected' : ''}>明朝体</option></optgroup></select></div>`;
+      html += `<div class="field"><div class="field-label-block">文字色とフチ</div><div class="inline-controls"><input class="small-color" type="color" id="prop-fill" value="${layer.fill || '#171717'}" aria-label="文字色"><label class="check-label" style="font-size:10px"><input type="checkbox" id="prop-outline" ${layer.outline ? 'checked' : ''}> フチあり</label><input class="small-color" type="color" id="prop-stroke" value="${layer.stroke || '#171717'}" aria-label="フチの色" title="フチの色"></div><div class="color-presets"><button class="text-color-btn" data-fill="#171717" type="button"><span class="color-dot" style="background:#171717"></span>黒</button><button class="text-color-btn" data-fill="#e53935" type="button"><span class="color-dot" style="background:#e53935"></span>赤</button><button class="text-color-btn" data-fill="#fffefa" type="button"><span class="color-dot" style="background:#fffefa"></span>白</button></div></div>`;
+      html += rangeControl('prop-outline-width', 'フチの太さ', layer.outlineWidth || 18, 1, 72, ' px');
+      html += rangeControl('prop-opacity', '透明度', layer.opacity ?? 100, 10, 100, '%');
+      html += rangeControl('prop-tracking', '字間（マイナスで重ねる）', layer.tracking ?? 0, trackingMin(layer), 32, ' px');
+      html += rangeControl('prop-rotate', '傾き', layer.rotate || 0, -15, 15, '°');
+      html += `<div class="divider"></div><div class="position-grid">${coordControl('x', '横位置', layer.x)}${coordControl('y', '縦位置', layer.y)}</div>`;
+    } else if (layer.type === 'line') {
+      html += `<div class="section-caption" style="margin:0 0 11px">線に小さな揺れをつけ、端は丸めずフラットにしています。</div>`;
+      html += rangeControl('prop-length', '下線の長さ', layer.length, 10, 95, '%');
+      html += rangeControl('prop-thickness', '線の太さ', layer.thickness, 4, 100, ' px');
+      html += `<div class="field"><label for="prop-line-color">線の色</label><div class="inline-controls"><input class="small-color" type="color" id="prop-line-color" value="${layer.color || '#171717'}"><button class="text-color-btn" data-linecolor="#171717" type="button"><span class="color-dot" style="background:#171717"></span>黒</button><button class="text-color-btn" data-linecolor="#e53935" type="button"><span class="color-dot" style="background:#e53935"></span>赤</button></div></div>`;
+      html += rangeControl('prop-opacity', '透明度', layer.opacity ?? 100, 10, 100, '%');
+      html += rangeControl('prop-rotate', '傾き', layer.rotate || 0, -30, 30, '°');
+      html += `<div class="divider"></div><div class="position-grid">${coordControl('x', '横位置', layer.x)}${coordControl('y', '縦位置', layer.y)}</div>`;
+    } else {
+      html += `<div class="field"><div class="field-label-block">画像・ロゴ</div><div style="font-size:11px;line-height:1.6;color:#77756f;margin-bottom:10px">${escapeHTML(layer.name || 'アップロードした画像')}<br>透明背景のPNGロゴも使えます。</div><button type="button" class="subtle-btn" id="replace-image">画像を差し替える</button></div>`;
+      html += rangeControl('prop-image-size', '画像の横幅', layer.size, 8, 80, '%');
+      html += rangeControl('prop-opacity', '透明度', layer.opacity ?? 100, 10, 100, '%');
+      html += rangeControl('prop-rotate', '傾き', layer.rotate || 0, -30, 30, '°');
+      html += `<div class="divider"></div><div class="position-grid">${coordControl('x', '横位置', layer.x)}${coordControl('y', '縦位置', layer.y)}</div>`;
+    }
+    html += `<button type="button" class="subtle-btn delete-full" id="delete-selected">この要素を削除</button>`;
+    propsEl.innerHTML = html;
+    bindProps(layer);
+  }
+
+  function bindRange(id, layer, key, unit = '') {
+    const input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('input', () => {
+      layer[key] = Number(input.value);
+      const display = document.getElementById(id + '-val');
+      if (display) display.textContent = `${input.value}${unit}`;
+      if (layer.type === 'text' && key === 'size') syncTextSizeControls(layer);
+      if (layer.type === 'text' && key === 'tracking') syncTextTrackingControls(layer);
+      renderCanvas();
+      renderLayers();
+    });
+  }
+  function bindProps(layer) {
+    const text = document.getElementById('prop-text');
+    if (text) text.addEventListener('input', () => { layer.text = text.value; renderCanvas(); renderLayers(); });
+    const wrap = document.getElementById('prop-wrap');
+    if (wrap) wrap.addEventListener('change', () => { layer.wrap = wrap.checked; renderCanvas(); });
+    bindRange('prop-size', layer, 'size', ' px');
+    bindRange('prop-outline-width', layer, 'outlineWidth', ' px');
+    bindRange('prop-opacity', layer, 'opacity', '%');
+    bindRange('prop-tracking', layer, 'tracking', ' px');
+    bindRange('prop-rotate', layer, 'rotate', '°');
+    bindRange('prop-length', layer, 'length', '%');
+    bindRange('prop-thickness', layer, 'thickness', ' px');
+    bindRange('prop-image-size', layer, 'size', '%');
+    const font = document.getElementById('prop-font');
+    if (font) font.addEventListener('change', () => {
+      layer.font = font.value;
+      renderCanvas();
+      ensureLayerFont(layer).then(() => renderCanvas());
+    });
+    const fill = document.getElementById('prop-fill');
+    if (fill) fill.addEventListener('input', () => { layer.fill = fill.value; renderCanvas(); });
+    const outline = document.getElementById('prop-outline');
+    if (outline) outline.addEventListener('change', () => { layer.outline = outline.checked; renderCanvas(); });
+    const stroke = document.getElementById('prop-stroke');
+    if (stroke) stroke.addEventListener('input', () => { layer.stroke = stroke.value; renderCanvas(); });
+    const lineColor = document.getElementById('prop-line-color');
+    if (lineColor) lineColor.addEventListener('input', () => { layer.color = lineColor.value; renderCanvas(); });
+    const x = document.getElementById('prop-x');
+    if (x) x.addEventListener('input', () => { layer.x = clamp(Number(x.value) || 0, 0, 100); renderCanvas(); });
+    const y = document.getElementById('prop-y');
+    if (y) y.addEventListener('input', () => { layer.y = clamp(Number(y.value) || 0, 0, 100); renderCanvas(); });
+    document.querySelectorAll('[data-fill]').forEach(button => button.addEventListener('click', () => {
+      layer.fill = button.dataset.fill;
+      const field = document.getElementById('prop-fill'); if (field) field.value = layer.fill;
+      renderCanvas();
+    }));
+    document.querySelectorAll('[data-linecolor]').forEach(button => button.addEventListener('click', () => {
+      layer.color = button.dataset.linecolor;
+      const field = document.getElementById('prop-line-color'); if (field) field.value = layer.color;
+      renderCanvas();
+    }));
+    const replace = document.getElementById('replace-image');
+    if (replace) replace.addEventListener('click', () => { pendingReplaceId = layer.id; imageInput.click(); });
+    document.getElementById('delete-selected')?.addEventListener('click', () => deleteLayer(layer.id));
+  }
+
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+  function trackingMin(layer) {
+    const naturalMin = -Math.max(32, Math.round((layer.size || 100) * 1.25));
+    return Math.min(naturalMin, Math.round(layer.tracking ?? 0));
+  }
+  function renderAll() { renderCanvas(); renderLayers(); renderProps(); renderQuickBar(); }
+  function selectLayer(id) { state.selected = id; renderAll(); }
+  function addText() {
+    const id = 't' + state.nextId++;
+    state.layers.push({ id, type:'text', text:'ここに文字を入力', x:50, y:50, size:140, fill:'#e53935', stroke:'#171717', outline:true, outlineWidth:24, opacity:100, tracking:0, wrap:true, font:'marker', rotate:0, weight:400 });
+    state.selected = id; renderAll(); document.getElementById('prop-text')?.focus();
+  }
+  function addLine() {
+    const id = 'l' + state.nextId++;
+    state.layers.push({ id, type:'line', x:50, y:62, length:45, thickness:33, color:'#171717', opacity:100, rotate:0 });
+    state.selected = id; renderAll();
+  }
+  function addImageFromFile(file, replaceId = null) {
+    if (!file || !file.type.startsWith('image/')) { showToast('画像ファイルを選んでください'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result;
+      const img = new Image();
+      img.onload = () => {
+        let layer = replaceId ? getLayer(replaceId) : null;
+        if (!layer) {
+          const id = 'i' + state.nextId++;
+          layer = { id, type:'image', name:file.name, src, img, x:50, y:50, size:25, opacity:100, rotate:0 };
+          state.layers.push(layer); state.selected = id;
+        } else { layer.name = file.name; layer.src = src; layer.img = img; }
+        renderAll();
+      };
+      img.onerror = () => showToast('この画像は読み込めませんでした');
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+  }
+  function deleteLayer(id) {
+    state.layers = state.layers.filter(layer => layer.id !== id);
+    state.selected = state.layers.length ? state.layers[Math.max(0, state.layers.length - 1)].id : null;
+    renderAll();
+  }
+  function moveLayer(id, direction) {
+    const index = state.layers.findIndex(layer => layer.id === id);
+    const next = direction === 'up' ? index + 1 : index - 1;
+    if (index < 0 || next < 0 || next >= state.layers.length) return;
+    [state.layers[index], state.layers[next]] = [state.layers[next], state.layers[index]];
+    renderAll();
+  }
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2300);
+  }
+
+  document.getElementById('format-controls').addEventListener('click', event => {
+    const button = event.target.closest('[data-format]');
+    if (!button) return;
+    state.format = button.dataset.format;
+    document.querySelectorAll('.format-btn').forEach(el => el.classList.toggle('active', el === button));
+    renderCanvas();
+  });
+  document.getElementById('border-toggle').addEventListener('change', event => { state.border = event.target.checked; renderCanvas(); });
+  document.getElementById('border-width').addEventListener('input', event => {
+    state.borderWidth = Number(event.target.value);
+    document.getElementById('border-width-val').textContent = `${event.target.value} px`;
+    renderCanvas();
+  });
+  document.getElementById('add-text').addEventListener('click', addText);
+  document.getElementById('add-line').addEventListener('click', addLine);
+  document.getElementById('quick-size').addEventListener('input', event => {
+    const layer = getLayer(state.selected);
+    if (!layer || layer.type !== 'text') return;
+    layer.size = Number(event.target.value);
+    syncTextSizeControls(layer);
+    renderCanvas(); renderLayers();
+  });
+  function stepSelectedTextSize(delta) {
+    const layer = getLayer(state.selected);
+    if (!layer || layer.type !== 'text') return;
+    layer.size = clamp(layer.size + delta, 28, 480);
+    syncTextSizeControls(layer);
+    renderCanvas(); renderLayers();
+  }
+  document.getElementById('quick-smaller').addEventListener('click', () => stepSelectedTextSize(-10));
+  document.getElementById('quick-larger').addEventListener('click', () => stepSelectedTextSize(10));
+  document.getElementById('quick-tracking').addEventListener('input', event => {
+    const layer = getLayer(state.selected);
+    if (!layer || layer.type !== 'text') return;
+    layer.tracking = Number(event.target.value);
+    syncTextTrackingControls(layer);
+    renderCanvas();
+  });
+  function stepSelectedTracking(delta) {
+    const layer = getLayer(state.selected);
+    if (!layer || layer.type !== 'text') return;
+    layer.tracking = clamp((layer.tracking ?? 0) + delta, trackingMin(layer), 32);
+    syncTextTrackingControls(layer);
+    renderCanvas();
+  }
+  document.getElementById('quick-spacing-narrow').addEventListener('click', () => stepSelectedTracking(-2));
+  document.getElementById('quick-spacing-wide').addEventListener('click', () => stepSelectedTracking(2));
+  document.getElementById('add-image').addEventListener('click', () => { pendingReplaceId = null; imageInput.click(); });
+  imageInput.addEventListener('change', event => {
+    const file = event.target.files && event.target.files[0];
+    addImageFromFile(file, pendingReplaceId);
+    event.target.value = '';
+  });
+  listEl.addEventListener('click', event => {
+    const select = event.target.closest('[data-select]');
+    const move = event.target.closest('[data-move]');
+    const del = event.target.closest('[data-delete]');
+    if (select) selectLayer(select.dataset.select);
+    else if (move) moveLayer(move.dataset.id, move.dataset.move);
+    else if (del) deleteLayer(del.dataset.delete);
+  });
+
+  const activePointers = new Map();
+  let pinchState = null;
+  function pointerPosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    const f = currentFormat();
+    return { x:(event.clientX - rect.left) / rect.width * f.w, y:(event.clientY - rect.top) / rect.height * f.h };
+  }
+  function hitLayer(point) {
+    const { w, h } = currentFormat();
+    for (let i = state.layers.length - 1; i >= 0; i--) {
+      const layer = state.layers[i];
+      const b = layerBounds(layer, w, h);
+      if (point.x >= b.x - 8 && point.x <= b.x + b.w + 8 && point.y >= b.y - 8 && point.y <= b.y + b.h + 8) return layer;
+    }
+    return null;
+  }
+  function midpoint(a, b) { return { x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 }; }
+  function distance(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+  function syncPositionControls(layer) {
+    const x = document.getElementById('prop-x'); const y = document.getElementById('prop-y');
+    if (x) x.value = Math.round(layer.x);
+    if (y) y.value = Math.round(layer.y);
+  }
+  canvas.addEventListener('pointerdown', event => {
+    const point = pointerPosition(event);
+    activePointers.set(event.pointerId, point);
+    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
+
+    if (event.pointerType === 'touch' && activePointers.size >= 2) {
+      const layer = getLayer(state.selected);
+      if (layer && layer.type === 'text') {
+        const points = [...activePointers.values()].slice(0, 2);
+        const { w, h } = currentFormat();
+        pinchState = {
+          id: layer.id,
+          startDistance: Math.max(1, distance(points[0], points[1])),
+          startSize: layer.size,
+          startMidpoint: midpoint(points[0], points[1]),
+          startX: layer.x / 100 * w,
+          startY: layer.y / 100 * h
+        };
+        dragState = null;
+        canvas.classList.add('dragging');
+        event.preventDefault();
+        return;
+      }
+    }
+
+    const layer = hitLayer(point);
+    if (!layer) {
+      if (activePointers.size === 1) { state.selected = null; renderAll(); }
+      return;
+    }
+    if (state.selected !== layer.id) {
+      state.selected = layer.id;
+      renderLayers(); renderProps(); renderQuickBar();
+    }
+    const { w, h } = currentFormat();
+    dragState = { id:layer.id, dx:point.x - layer.x / 100 * w, dy:point.y - layer.y / 100 * h };
+    canvas.classList.add('dragging');
+    renderCanvas();
+  });
+  canvas.addEventListener('pointermove', event => {
+    const point = pointerPosition(event);
+    if (activePointers.has(event.pointerId)) activePointers.set(event.pointerId, point);
+
+    if (pinchState && activePointers.size >= 2) {
+      const layer = getLayer(pinchState.id);
+      if (!layer) return;
+      const points = [...activePointers.values()].slice(0, 2);
+      const { w, h } = currentFormat();
+      const center = midpoint(points[0], points[1]);
+      const ratio = distance(points[0], points[1]) / pinchState.startDistance;
+      layer.size = clamp(pinchState.startSize * ratio, 28, 480);
+      layer.x = clamp((pinchState.startX + center.x - pinchState.startMidpoint.x) / w * 100, 0, 100);
+      layer.y = clamp((pinchState.startY + center.y - pinchState.startMidpoint.y) / h * 100, 0, 100);
+      syncTextSizeControls(layer); syncPositionControls(layer);
+      renderCanvas(); renderLayers();
+      return;
+    }
+
+    if (!dragState) return;
+    const layer = getLayer(dragState.id); if (!layer) return;
+    const { w, h } = currentFormat();
+    layer.x = clamp((point.x - dragState.dx) / w * 100, 0, 100);
+    layer.y = clamp((point.y - dragState.dy) / h * 100, 0, 100);
+    syncPositionControls(layer);
+    renderCanvas();
+  });
+  function endPointer(event) {
+    activePointers.delete(event.pointerId);
+    pinchState = null;
+    dragState = null;
+    canvas.classList.remove('dragging');
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+
+  let exportObjectUrl = null;
+  const exportModal = document.getElementById('export-modal');
+  function openExportPreview(blob, width, height) {
+    if (exportObjectUrl) URL.revokeObjectURL(exportObjectUrl);
+    exportObjectUrl = URL.createObjectURL(blob);
+    const preview = document.getElementById('export-preview');
+    const saveLink = document.getElementById('export-save');
+    const date = new Date();
+    const dateTag = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`;
+    preview.src = exportObjectUrl;
+    const fileSizeKB = Math.max(1, Math.round(blob.size / 1024));
+    document.getElementById('export-dimensions').textContent = `${width} × ${height} px · 約${fileSizeKB} KB`;
+    saveLink.href = exportObjectUrl;
+    saveLink.download = `pop-studio-${dateTag}-${width}x${height}.png`;
+    exportModal.classList.add('open');
+    exportModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('export-save').focus();
+  }
+  function closeExportPreview() {
+    exportModal.classList.remove('open');
+    exportModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    document.getElementById('export-preview').removeAttribute('src');
+    if (exportObjectUrl) {
+      const oldUrl = exportObjectUrl;
+      exportObjectUrl = null;
+      setTimeout(() => URL.revokeObjectURL(oldUrl), 1500);
+    }
+  }
+  document.getElementById('export-close').addEventListener('click', closeExportPreview);
+  document.getElementById('export-close-bottom').addEventListener('click', closeExportPreview);
+  exportModal.addEventListener('click', event => { if (event.target.matches('[data-close-export]')) closeExportPreview(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && exportModal.classList.contains('open')) closeExportPreview(); });
+
+  document.getElementById('export-btn').addEventListener('click', () => {
+    const button = document.getElementById('export-btn');
+    button.disabled = true;
+    showToast('フォントとPNGを準備しています…');
+    ensureSceneFonts().then(() => {
+      renderCanvas();
+      const { w, h } = currentFormat();
+      const output = document.createElement('canvas');
+      output.width = w; output.height = h;
+      const outCtx = output.getContext('2d');
+      drawScene(outCtx, w, h, null);
+      output.toBlob(blob => {
+        button.disabled = false;
+        if (!blob) { showToast('PNGを作成できませんでした'); return; }
+        openExportPreview(blob, w, h);
+        showToast('Web用PNGを用意しました。保存ボタンを押してください');
+      }, 'image/png');
+    }).catch(() => {
+      button.disabled = false;
+      showToast('フォントまたは画像の読み込みに失敗しました');
+    });
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
